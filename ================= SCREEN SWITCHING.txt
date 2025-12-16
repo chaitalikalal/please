@@ -1,0 +1,126 @@
+/* ================= SCREEN SWITCHING ================= */
+function goTo(id) {
+  document.querySelectorAll(".screen").forEach(screen => screen.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+/* ================= BUBBLE GAME ================= */
+let bubbleClicked = false;
+
+function popBubble(el) {
+  if (bubbleClicked) return;
+  bubbleClicked = true;
+
+  el.classList.add("popped");
+
+  const reward = el.innerText;
+  let resultText = "";
+  let resultSub = "";
+
+  if (reward.includes("OFF") || reward.includes("FREE")) {
+    resultText = "🎉 Congratulations!";
+    resultSub = `You unlocked ${reward}.<br>Applied automatically on your next Blinkit order.`;
+  } else {
+    resultText = "😄 Oops!";
+    resultSub = "Better luck next time.<br>We still love you 💛";
+  }
+
+  setTimeout(() => {
+    document.getElementById("resultText").innerHTML = resultText;
+    document.getElementById("resultSub").innerHTML = resultSub;
+    goTo("result");
+  }, 400);
+}
+
+/* ================= QUOTES ================= */
+const quotes = [
+  "Small smiles make big days better 😊",
+  "You’re doing amazing, keep going 💛",
+  "A little joy goes a long way ✨",
+  "Today is a good day to smile 😄"
+];
+
+function showQuote() {
+  const random = quotes[Math.floor(Math.random() * quotes.length)];
+  document.getElementById("quote").innerText = random;
+}
+
+/* ================= MESSAGE SHARING ================= */
+function generateLink() {
+  const msg = document.getElementById("userMessage").value.trim();
+  if (!msg) {
+    alert("Please write a message first 💌");
+    return;
+  }
+  const encoded = encodeURIComponent(msg);
+  const url = `${window.location.origin}${window.location.pathname}?msg=${encoded}`;
+  document.getElementById("shareLink").innerHTML =
+    `Share this link with your friend:<br><a href="${url}">${url}</a>`;
+}
+
+/* ================= FRIEND MESSAGE VIEW ================= */
+window.onload = function () {
+  const params = new URLSearchParams(window.location.search);
+  const message = params.get("msg");
+
+  if (message) {
+    goTo("love");
+    document.querySelector("#love p").innerHTML =
+      `💌 Your friend says:<br><strong>${decodeURIComponent(message)}</strong>`;
+  }
+};
+
+/* ================= MEMORY GAME ================= */
+const memoryData = ["🍎","🍌","🍓","🍇","🍒","🍍"];
+let memoryCards = [];
+let firstCard = null;
+let lockBoard = false;
+
+function startMemoryGame() {
+  memoryCards = [...memoryData, ...memoryData]; // duplicate for pairs
+  memoryCards.sort(() => 0.5 - Math.random()); // shuffle
+
+  const puzzleContainer = document.querySelector(".puzzle-box");
+  puzzleContainer.innerHTML = "";
+
+  memoryCards.forEach(symbol => {
+    const card = document.createElement("div");
+    card.classList.add("memory-card");
+    card.dataset.symbol = symbol;
+    card.innerHTML = `<div class="front">?</div><div class="back">${symbol}</div>`;
+    card.addEventListener("click", flipCard);
+    puzzleContainer.appendChild(card);
+  });
+}
+
+function flipCard() {
+  if (lockBoard || this.classList.contains("flipped")) return;
+
+  this.classList.add("flipped");
+
+  if (!firstCard) {
+    firstCard = this;
+    return;
+  }
+
+  const secondCard = this;
+  if (firstCard.dataset.symbol === secondCard.dataset.symbol) {
+    firstCard = null;
+    checkWin();
+  } else {
+    lockBoard = true;
+    setTimeout(() => {
+      firstCard.classList.remove("flipped");
+      secondCard.classList.remove("flipped");
+      firstCard = null;
+      lockBoard = false;
+    }, 800);
+  }
+}
+
+function checkWin() {
+  const flippedCards = document.querySelectorAll(".memory-card.flipped");
+  if (flippedCards.length === memoryCards.length) {
+    alert("🎉 You matched all cards! Great job!");
+  }
+}
